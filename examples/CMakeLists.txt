@@ -42,6 +42,7 @@ add_subdirectory(C++/DDS)
 
 if(SECURITY)
     add_subdirectory(C++/SecureHelloWorldExample)
+    add_subdirectory(C++/SecurityLoggingSubscriberExample)
 endif()
 
 if(SQLITE3_SUPPORT)
