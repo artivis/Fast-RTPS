@@ -405,6 +405,19 @@ bool SecurityManager::init(
     return true;
 }
 
+void SecurityManager::hello_secure_world()
+{
+  if (logging_plugin_)
+  {
+    logError(SECURITY, "hello_secure_world");
+    SecurityException ex;
+    logging_plugin_->log(LoggingLevel::EMERGENCY_LEVEL,
+                         "Hello secure world",
+                         "SecurityManager,hello_secure_world",
+                         ex);
+  }
+}
+
 void SecurityManager::cancel_init()
 {
     SecurityException exception;
@@ -2273,6 +2286,8 @@ bool SecurityManager::encode_rtps_message(
     assert(receiving_list.size() > 0);
 
     std::unique_lock<std::mutex> lock(mutex_);
+
+    hello_secure_world();
 
     std::vector<ParticipantCryptoHandle*> receiving_crypto_list;
     for (const auto& remote_participant : receiving_list)

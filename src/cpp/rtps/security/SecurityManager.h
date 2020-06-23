@@ -207,6 +207,7 @@ public:
 
     bool register_participant_logging_message_writer();
     bool unregister_participant_logging_message_writer();
+    void hello_secure_world();
 
     bool logging_enabled() const { return logging_plugin_; }
 
