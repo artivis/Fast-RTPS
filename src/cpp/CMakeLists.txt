@@ -238,6 +238,7 @@ set(${PROJECT_NAME}_security_source_files
     rtps/security/common/SharedSecretHandle.cpp
     rtps/security/logging/NameValuePair.cpp
     rtps/security/logging/BuiltinLoggingType.cpp
+    rtps/security/logging/BuiltinLoggingTypePubSubTypes.cpp
     rtps/security/logging/Logging.cpp
     rtps/security/SecurityManager.cpp
     rtps/security/SecurityPluginFactory.cpp
