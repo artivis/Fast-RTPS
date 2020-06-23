@@ -373,6 +373,21 @@ void RTPSParticipantImpl::enable()
     {
         logError(RTPS_PARTICIPANT, "The builtin protocols were not correctly initialized");
     }
+#if HAVE_SECURITY
+    else
+    {
+      if (is_security_initialized())
+      {
+        if (m_security_manager.logging_enabled())
+        {
+          if (!m_security_manager.register_participant_logging_message_writer())
+          {
+            logError(RTPS_PARTICIPANT, "The security writter could not be registered");
+          }
+        }
+      }
+    }
+#endif
 
     //Start reception
     for (auto& receiver : m_receiverResourcelist)
