@@ -1,5 +1,9 @@
 #include <security/logging/LogTopic.h>
 
+#include <fastdds/rtps/security/logging/BuiltinLoggingTypePubSubTypes.h>
+#include <fastdds/rtps/history/WriterHistory.h>
+#include <fastdds/rtps/writer/RTPSWriter.h>
+
 #include <fastrtps/publisher/Publisher.h>
 #include <fastrtps/log/Log.h>
 
@@ -89,6 +93,42 @@ void LogTopic::publish(
 
     file_stream_ << " : " << builtin_msg.message << "\n";
     file_stream_.flush();
+
+    if (writer_)
+    {
+      if (writer_history_->isFull())
+      {
+        logWarning(SECURITY, "History full, cleaning up.");
+        writer_history_->remove_all_changes();
+      }
+
+      CacheChange_t* ch = writer_->new_change(builtin_msg, ALIVE/*, h*/);
+
+      if (!ch) // In the case history is full, remove some old changes
+      {
+        writer_->remove_older_changes(20);
+        ch = writer_->new_change(builtin_msg, ALIVE);
+
+        if (!ch) // In the case history is full, remove some old changes
+        {
+          logError(SECURITY, "Failed to create a security logging new change");
+          return;
+        }
+      }
+
+      if (!writer_type_->serialize((void*)&builtin_msg, &(ch->serializedPayload)))
+      {
+        logError(SECURITY, "Logging plugin Message serialization failed");
+        writer_history_->release_Cache(ch);
+        return;
+      }
+
+      if (!writer_history_->add_change(ch))
+      {
+        logError(SECURITY, "Logging plugin Message change update failed");
+        writer_history_->release_Cache(ch);
+      }
+    }
 }
 
 } //namespace security
