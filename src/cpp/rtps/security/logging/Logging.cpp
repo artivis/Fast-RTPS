@@ -191,6 +191,26 @@ bool Logging::set_domain_id(
     return true;
 }
 
+bool Logging::set_writer(RTPSWriter* writer,
+                         WriterHistory* writer_history,
+                         BuiltinLoggingTypePubSubType* writer_type/*,
+                         SecurityException& exception*/)
+{
+  // @TODO(artivis) It shouldn't be possible to set/change
+  // the writer once Logging is enabled.
+//  if (logging_enabled_)
+//  {
+//      exception = SecurityException("Cannot set writer after enable_logging called.");
+//      return false;
+//  }
+
+  writer_ = writer;
+  writer_history_ = writer_history;
+  writer_type_ = writer_type;
+
+  return true;
+}
+
 } //namespace security
 } //namespace rtps
 } //namespace fastrtps

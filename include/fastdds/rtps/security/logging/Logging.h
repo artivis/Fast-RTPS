@@ -30,7 +30,15 @@
 namespace eprosima {
 namespace fastrtps {
 namespace rtps {
+
+// Forward declare
+class RTPSWriter;
+class WriterHistory;
+
 namespace security {
+
+// Forward declare
+class BuiltinLoggingTypePubSubType;
 
 /**
  * @brief The LoggerListener class
@@ -135,6 +143,11 @@ public:
             const uint32_t id,
             SecurityException& exception);
 
+    bool set_writer(RTPSWriter* writer,
+                    WriterHistory* writer_history,
+                    BuiltinLoggingTypePubSubType* writer_type/*,
+                    SecurityException& exception*/);
+
 protected:
 
     /**
@@ -177,6 +190,12 @@ protected:
     virtual void log_impl(
             const BuiltinLoggingType& message,
             SecurityException& exception) const = 0;
+
+protected:
+
+    WriterHistory* writer_history_;
+    RTPSWriter* writer_;
+    BuiltinLoggingTypePubSubType* writer_type_;
 
 private:
 
