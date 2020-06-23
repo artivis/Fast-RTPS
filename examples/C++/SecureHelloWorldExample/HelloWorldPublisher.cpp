@@ -59,6 +59,16 @@ bool HelloWorldPublisher::init()
                     "file://certs/permissions.smime"));
     participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
             "builtin.AES-GCM-GMAC");
+
+    participant_property_policy.properties().emplace_back("dds.sec.log.plugin",
+                "builtin.DDS_LogTopic");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.distribute",
+                "true");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.logging_level",
+                "DEBUG_LEVEL");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.log_file",
+                "/tmp/security.log");
+
     PParam.rtps.properties = participant_property_policy;
 
     mp_participant = Domain::createParticipant(PParam);
@@ -119,6 +129,7 @@ void HelloWorldPublisher::run(uint32_t samples)
         else
         {
             std::cout << "Message: "<<m_Hello.message()<< " with index: "<< m_Hello.index()<< " SENT"<<std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
 }

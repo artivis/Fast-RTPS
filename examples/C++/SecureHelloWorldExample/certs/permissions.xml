@@ -17,6 +17,7 @@
                 <publish>
                     <topics>
                         <topic>HelloWorldTopic</topic>
+                        <topic>DDS:Security:LogTopic</topic>
                     </topics>
                 </publish>
             </allow_rule>
@@ -35,6 +36,11 @@
                         <max>230</max>
                     </id_range>
                 </domains>
+                <publish>
+                    <topics>
+                        <topic>DDS:Security:LogTopic</topic>
+                    </topics>
+                </publish>
                 <subscribe>
                     <topics>
                         <topic>HelloWorldTopic</topic>

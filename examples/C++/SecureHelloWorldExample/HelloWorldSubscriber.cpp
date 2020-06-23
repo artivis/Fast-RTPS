@@ -55,6 +55,16 @@ bool HelloWorldSubscriber::init()
                     "file://certs/permissions.smime"));
     participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
                 "builtin.AES-GCM-GMAC");
+
+    participant_property_policy.properties().emplace_back("dds.sec.log.plugin",
+                "builtin.DDS_LogTopic");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.distribute",
+                "true");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.logging_level",
+                "DEBUG_LEVEL");
+    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.log_file",
+                "/tmp/security.log");
+
     PParam.rtps.properties = participant_property_policy;
 
     mp_participant = Domain::createParticipant(PParam);
