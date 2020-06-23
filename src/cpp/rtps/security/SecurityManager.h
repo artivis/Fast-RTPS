@@ -41,6 +41,7 @@ namespace fastrtps {
 namespace rtps {
 
 class RTPSParticipantImpl;
+class RTPSWriter;
 class StatelessWriter;
 class StatelessReader;
 class StatefulWriter;
@@ -55,6 +56,7 @@ class AccessControl;
 class Cryptography;
 struct ParticipantSecurityAttributes;
 struct EndpointSecurityAttributes;
+class BuiltinLoggingTypePubSubType;
 
 class SecurityManager
 {
@@ -202,6 +204,11 @@ public:
 
     uint32_t calculate_extra_size_for_encoded_payload(
             const GUID_t& writer_guid);
+
+    bool register_participant_logging_message_writer();
+    bool unregister_participant_logging_message_writer();
+
+    bool logging_enabled() const { return logging_plugin_; }
 
 private:
 
@@ -441,6 +448,9 @@ private:
     bool create_participant_volatile_message_secure_reader();
     void delete_participant_volatile_message_secure_reader();
 
+    bool create_participant_logging_message_writer();
+    void delete_participant_logging_message_writer();
+
     bool discovered_reader(
             const GUID_t& writer_guid,
             const GUID_t& remote_participant,
@@ -525,6 +535,10 @@ private:
     SecurityPluginFactory factory_;
 
     Logging* logging_plugin_;
+    WriterHistory* logging_plugin_writer_history_;
+    RTPSWriter* logging_plugin_writer_;
+    BuiltinLoggingTypePubSubType* logging_plugin_type_;
+
 
     Authentication* authentication_plugin_;
 

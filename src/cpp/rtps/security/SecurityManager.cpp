@@ -25,6 +25,7 @@
 #include <fastdds/rtps/security/authentication/Authentication.h>
 #include <fastdds/rtps/security/accesscontrol/AccessControl.h>
 #include <fastdds/rtps/security/accesscontrol/SecurityMaskUtilities.h>
+#include <fastdds/rtps/security/logging/BuiltinLoggingTypePubSubTypes.h>
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/rtps/participant/RTPSParticipantListener.h>
 #include <fastdds/rtps/network/NetworkFactory.h>
@@ -199,6 +200,12 @@ bool SecurityManager::init(
             {
                 return init_logging_fail(exception);
             }
+
+            if (!create_participant_logging_message_writer())
+            {
+                exception = SecurityException("Participant logging plugin Message Writer creation failed");
+                return init_logging_fail(exception);
+            }
         }
         else
         {
@@ -357,6 +364,16 @@ bool SecurityManager::init(
             {
                 // Should be activated here, to enable encription buffer on created entities
                 security_activated = true;
+
+                if (logging_plugin_)
+                {
+                  SecurityException logging_exception;
+                  logging_plugin_->log(LoggingLevel::INFORMATIONAL_LEVEL,
+                                       "Security activated",
+                                       "SecurityManager,init",
+                                       logging_exception);
+                }
+
                 return true;
             }
 
@@ -412,6 +429,30 @@ void SecurityManager::cancel_init()
 
     delete authentication_plugin_;
     authentication_plugin_ = nullptr;
+
+    if (logging_plugin_ != nullptr)
+    {
+        if (logging_plugin_type_ != nullptr)
+        {
+          delete logging_plugin_type_;
+          logging_plugin_type_ = nullptr;
+        }
+
+        if (logging_plugin_writer_ != nullptr)
+        {
+            participant_->deleteUserEndpoint(logging_plugin_writer_);
+            logging_plugin_writer_ = nullptr;
+        }
+
+        if (logging_plugin_writer_history_ != nullptr)
+        {
+          delete logging_plugin_writer_history_;
+          logging_plugin_writer_history_ = nullptr;
+        }
+
+        delete logging_plugin_;
+        logging_plugin_ = nullptr;
+    }
 }
 
 void SecurityManager::destroy()
@@ -521,6 +562,24 @@ void SecurityManager::destroy()
 
     if (logging_plugin_ != nullptr)
     {
+        if (logging_plugin_type_ != nullptr)
+        {
+          delete logging_plugin_type_;
+          logging_plugin_type_ = nullptr;
+        }
+
+        if (logging_plugin_writer_ != nullptr)
+        {
+            participant_->deleteUserEndpoint(logging_plugin_writer_);
+            logging_plugin_writer_ = nullptr;
+        }
+
+        if (logging_plugin_writer_history_ != nullptr)
+        {
+          delete logging_plugin_writer_history_;
+          logging_plugin_writer_history_ = nullptr;
+        }
+
         delete logging_plugin_;
         logging_plugin_ = nullptr;
     }
@@ -1237,6 +1296,108 @@ void SecurityManager::delete_participant_volatile_message_secure_reader()
         delete participant_volatile_message_secure_reader_history_;
         participant_volatile_message_secure_reader_history_ = nullptr;
     }
+}
+
+bool SecurityManager::create_participant_logging_message_writer()
+{
+    HistoryAttributes logging_plugin_history_attr;
+    logging_plugin_history_attr.payloadMaxSize = participant_->getMaxMessageSize();
+    logging_plugin_history_attr.initialReservedCaches = 20;
+    logging_plugin_history_attr.maximumReservedCaches = 100;
+    logging_plugin_writer_history_ = new WriterHistory(logging_plugin_history_attr);
+
+    if (!logging_plugin_writer_history_)
+    {
+        logError(SECURITY, "Participant logging plugin WriterHistory creation failed");
+        return false;
+    }
+
+    WriterAttributes logging_plugin_writer_attr;
+    logging_plugin_writer_attr.endpoint.endpointKind = WRITER;
+    logging_plugin_writer_attr.endpoint.reliabilityKind = RELIABLE;
+    logging_plugin_writer_attr.endpoint.durabilityKind = TRANSIENT_LOCAL;
+    logging_plugin_writer_attr.endpoint.topicKind = NO_KEY; //WITH_KEY
+//    logging_plugin_writer_attr.matched_readers_allocation = participant_->getRTPSParticipantAttributes().allocation.participants;
+
+    if (participant_->getRTPSParticipantAttributes().throughputController.bytesPerPeriod != UINT32_MAX &&
+        participant_->getRTPSParticipantAttributes().throughputController.periodMillisecs != 0           )
+    {
+        logging_plugin_writer_attr.mode = ASYNCHRONOUS_WRITER;
+    }
+
+    RTPSWriter* logging_plugin_writer = nullptr;
+
+    if (!participant_->createWriter(&logging_plugin_writer, logging_plugin_writer_attr,
+            logging_plugin_writer_history_, nullptr, //&logging_plugin_writer_listener_,
+            c_EntityId_Unknown, true))
+    {
+      logError(SECURITY, "Participant logging plugin Writer creation failed");
+      delete(logging_plugin_writer_history_);
+      logging_plugin_writer_history_ = nullptr;
+      return false;
+    }
+
+    logging_plugin_writer_ = logging_plugin_writer;
+
+    logging_plugin_type_ = new BuiltinLoggingTypePubSubType();
+
+    if (!logging_plugin_type_)
+    {
+        logError(SECURITY, "Participant logging plugin BuiltinLoggingTypePubSubType creation failed");
+        delete(logging_plugin_writer_history_);
+        logging_plugin_writer_history_ = nullptr;
+        return false;
+    }
+
+    return true;
+}
+
+bool SecurityManager::register_participant_logging_message_writer()
+{
+  if (!logging_plugin_writer_)
+  {
+    logError(SECURITY, "Participant logging plugin RTPS Writer is nullptr");
+    return false;
+  }
+
+  if (!participant_)
+  {
+    logError(SECURITY, "Participant logging plugin RTPS Writer is nullptr");
+    return false;
+  }
+
+  TopicAttributes att;
+  att.topicKind = NO_KEY;
+  att.topicDataType = "BuiltinLoggingType";
+  att.topicName = "DDS:Security:LogTopic";
+  WriterQos qos;
+
+  if (!participant_->registerWriter(logging_plugin_writer_, att, qos))
+  {
+    logError(SECURITY, "Could not register participant logging plugin RTPS Writer");
+    return false;
+  }
+
+  if (!logging_plugin_->set_writer(logging_plugin_writer_,
+                                   logging_plugin_writer_history_,
+                                   logging_plugin_type_))
+  {
+    logError(SECURITY, "Could not set participant logging plugin RTPS Writer");
+    return false;
+  }
+
+  return true;
+}
+
+bool SecurityManager::unregister_participant_logging_message_writer()
+{
+  logging_plugin_->set_writer(nullptr, nullptr, nullptr);
+  return true;
+}
+
+void SecurityManager::delete_participant_logging_message_writer()
+{
+  // todo
 }
 
 ParticipantGenericMessage SecurityManager::generate_authentication_message(
