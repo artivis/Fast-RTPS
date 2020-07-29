@@ -201,11 +201,11 @@ bool SecurityManager::init(
                 return init_logging_fail(exception);
             }
 
-            if (!create_participant_logging_message_writer())
-            {
-                exception = SecurityException("Participant logging plugin Message Writer creation failed");
-                return init_logging_fail(exception);
-            }
+//            if (!create_participant_logging_message_writer())
+//            {
+//                exception = SecurityException("Participant logging plugin Message Writer creation failed");
+//                return init_logging_fail(exception);
+//            }
         }
         else
         {
@@ -409,7 +409,7 @@ void SecurityManager::hello_secure_world()
 {
   if (logging_plugin_)
   {
-    logError(SECURITY, "hello_secure_world");
+    logInfo(SECURITY, "hello_secure_world");
     SecurityException ex;
     logging_plugin_->log(LoggingLevel::EMERGENCY_LEVEL,
                          "Hello secure world",
@@ -1038,6 +1038,11 @@ bool SecurityManager::create_entities()
     {
         if (crypto_plugin_ == nullptr || create_participant_volatile_message_secure_entities())
         {
+            if (logging_plugin_ != nullptr)
+            {
+                create_participant_logging_message_writer();
+            }
+
             logInfo(SECURITY, "Initialized security manager for participant " << participant_->getGuid());
             return true;
         }
@@ -1328,15 +1333,15 @@ bool SecurityManager::create_participant_logging_message_writer()
     WriterAttributes logging_plugin_writer_attr;
     logging_plugin_writer_attr.endpoint.endpointKind = WRITER;
     logging_plugin_writer_attr.endpoint.reliabilityKind = RELIABLE;
-    logging_plugin_writer_attr.endpoint.durabilityKind = TRANSIENT_LOCAL;
+//    logging_plugin_writer_attr.endpoint.durabilityKind = TRANSIENT_LOCAL;
     logging_plugin_writer_attr.endpoint.topicKind = NO_KEY; //WITH_KEY
 //    logging_plugin_writer_attr.matched_readers_allocation = participant_->getRTPSParticipantAttributes().allocation.participants;
 
-    if (participant_->getRTPSParticipantAttributes().throughputController.bytesPerPeriod != UINT32_MAX &&
-        participant_->getRTPSParticipantAttributes().throughputController.periodMillisecs != 0           )
-    {
-        logging_plugin_writer_attr.mode = ASYNCHRONOUS_WRITER;
-    }
+//    if (participant_->getRTPSParticipantAttributes().throughputController.bytesPerPeriod != UINT32_MAX &&
+//        participant_->getRTPSParticipantAttributes().throughputController.periodMillisecs != 0           )
+//    {
+//        logging_plugin_writer_attr.mode = ASYNCHRONOUS_WRITER;
+//    }
 
     RTPSWriter* logging_plugin_writer = nullptr;
 
@@ -1384,6 +1389,7 @@ bool SecurityManager::register_participant_logging_message_writer()
   att.topicDataType = "BuiltinLoggingType";
   att.topicName = "DDS:Security:LogTopic";
   WriterQos qos;
+  qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
 
   if (!participant_->registerWriter(logging_plugin_writer_, att, qos))
   {

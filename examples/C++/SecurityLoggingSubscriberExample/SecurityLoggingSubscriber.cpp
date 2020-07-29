@@ -32,33 +32,57 @@ bool SecurityLoggingSubscriber::init()
     ParticipantAttributes PParam;
 
     PropertyPolicy participant_property_policy;
-    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin",
-                "builtin.PKI-DH");
-    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_ca",
-                    "file://certs/maincacert.pem");
-    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_certificate",
-                    "file://certs/mainsubcert.pem");
-    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.private_key",
-                    "file://certs/mainsubkey.pem");
-    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
-                    "builtin.Access-Permissions"));
-    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions_ca",
-                    "file://certs/maincacert.pem"));
-    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
-                    "file://certs/governance.smime"));
-    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
-                    "file://certs/permissions.smime"));
-    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
-                "builtin.AES-GCM-GMAC");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin",
+//                "builtin.PKI-DH");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_ca",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/maincacert.pem");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/mainsubcert.pem");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.private_key",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/mainsubkey.pem");
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
+//                    "builtin.Access-Permissions"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions_ca",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/maincacert.pem"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/governance.smime"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample/certs/permissions.smime"));
+//    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
+//                "builtin.AES-GCM-GMAC");
 
-    participant_property_policy.properties().emplace_back("dds.sec.log.plugin",
-                "builtin.DDS_LogTopic");
-    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.distribute",
-                "true");
-    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.logging_level",
-                "DEBUG_LEVEL");
-    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.log_file",
-                "/tmp/security.log");
+    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample/my_keystore/enclaves/talker_listener/security_listener/";
+
+
+
+    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin", "builtin.PKI-DH");
+
+    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_ca",
+                    keystore + "identity_ca.cert.pem");
+
+    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+                    keystore + "cert.pem");
+
+    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.private_key",
+                    keystore + "key.pem");
+
+    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin", "builtin.Access-Permissions"));
+
+    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions_ca",
+                    keystore + "permissions_ca.cert.pem"));
+
+    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
+                    keystore + "governance.p7s"));
+
+    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
+                    keystore + "permissions.p7s"));
+
+    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin", "builtin.AES-GCM-GMAC");
+
+//    participant_property_policy.properties().emplace_back("dds.sec.log.plugin", "builtin.DDS_LogTopic");
+//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.distribute", "true");
+//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.logging_level", "DEBUG_LEVEL");
+//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.log_file", "/tmp/security.log");
 
     PParam.rtps.properties = participant_property_policy;
 
@@ -76,10 +100,10 @@ bool SecurityLoggingSubscriber::init()
     Rparam.topic.topicKind = NO_KEY;
     Rparam.topic.topicDataType = "BuiltinLoggingType";
     Rparam.topic.topicName = "DDS:Security:LogTopic";
-    Rparam.topic.historyQos.kind = KEEP_LAST_HISTORY_QOS;
-    Rparam.topic.historyQos.depth = 30;
-    Rparam.topic.resourceLimitsQos.max_samples = 50;
-    Rparam.topic.resourceLimitsQos.allocated_samples = 20;
+//    Rparam.topic.historyQos.kind = KEEP_LAST_HISTORY_QOS;
+//    Rparam.topic.historyQos.depth = 30;
+//    Rparam.topic.resourceLimitsQos.max_samples = 50;
+//    Rparam.topic.resourceLimitsQos.allocated_samples = 20;
     Rparam.qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
 
     mp_subscriber = Domain::createSubscriber(mp_participant,Rparam,(SubscriberListener*)&m_listener);
@@ -101,17 +125,18 @@ void SecurityLoggingSubscriber::SubListener::onSubscriptionMatched(Subscriber* /
     if (info.status == MATCHED_MATCHING)
     {
         n_matched++;
-        logInfo(SECURITY, "Subscriber matched");
+        logInfo(SECURITY, "\n\n\n!!!!Subscriber matched!!!!\n\n\n");
     }
     else
     {
         n_matched--;
-        logInfo(SECURITY, "Subscriber NOT matched");
+        logInfo(SECURITY, "\n\n\n!!!!Subscriber NOT matched!!!!\n\n\n");
     }
 }
 
 void SecurityLoggingSubscriber::SubListener::onNewDataMessage(Subscriber* sub)
 {
+    logError(SECURITY, "\n\n\n!!!!onNewDataMessage!!!!\n\n\n");
     if (sub->takeNextData((void*)&m_msg, &m_info))
     {
         if (m_info.sampleKind == ALIVE)
@@ -123,7 +148,7 @@ void SecurityLoggingSubscriber::SubListener::onNewDataMessage(Subscriber* sub)
             std::string s_severity;
             security::LogLevel_to_string(m_msg.severity, s_severity, e);
 
-            std::cout << "Message: \n"
+            std::cout << "\n\nMessage: \n"
                       << m_msg.facility << "\n"
                       << s_severity << "\n"
                       << "Stamp: " << m_msg.timestamp << "\n"

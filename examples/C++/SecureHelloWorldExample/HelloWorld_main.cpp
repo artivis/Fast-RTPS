@@ -54,7 +54,7 @@ int main(int argc, char** argv)
                 HelloWorldPublisher mypub;
                 if(mypub.init())
                 {
-                    mypub.run(10);
+                    mypub.run(1000);
                 }
                 break;
             }

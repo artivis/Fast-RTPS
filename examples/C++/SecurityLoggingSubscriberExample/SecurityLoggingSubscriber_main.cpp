@@ -28,7 +28,7 @@ using namespace rtps;
 
 int main()
 {
-    Log::SetVerbosity(Log::Info);
+//    Log::SetVerbosity(Log::Info);
 
     SecurityLoggingSubscriber mysub;
     if(mysub.init())

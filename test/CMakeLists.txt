@@ -21,7 +21,7 @@ option(PROFILING_TESTS "Activate the building and execution of profiling tests" 
 option(EPROSIMA_BUILD_TESTS "Activate the building and execution unit tests and integral tests" OFF)
 
 if(EPROSIMA_BUILD AND NOT EPROSIMA_INSTALLER AND NOT EPROSIMA_INSTALLER_MINION)
-    set(EPROSIMA_BUILD_TESTS ON)
+    set(EPROSIMA_BUILD_TESTS OFF)
 endif()
 
 file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/valgrind.supp" MEMORYCHECK_SUPPRESSIONS_FILE_TMP)

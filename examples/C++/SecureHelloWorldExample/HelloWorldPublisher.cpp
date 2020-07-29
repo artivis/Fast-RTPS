@@ -41,24 +41,51 @@ bool HelloWorldPublisher::init()
     ParticipantAttributes PParam;
 
     PropertyPolicy participant_property_policy;
-    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin",
-            "builtin.PKI-DH");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin",
+//            "builtin.PKI-DH");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_ca",
+//            "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/maincacert.pem");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+//            "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/mainpubcert.pem");
+//    participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.private_key",
+//            "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/mainpubkey.pem");
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
+//                    "builtin.Access-Permissions"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions_ca",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/maincacert.pem"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/governance.smime"));
+//    participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
+//                    "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecureHelloWorldExample/certs/permissions.smime"));
+//    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
+//            "builtin.AES-GCM-GMAC");
+
+    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample/my_keystore/enclaves/talker_listener/talker/";
+
+    participant_property_policy.properties().emplace_back("dds.sec.auth.plugin", "builtin.PKI-DH");
+
     participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_ca",
-            "file://certs/maincacert.pem");
+                    keystore + "identity_ca.cert.pem");
+
     participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.identity_certificate",
-            "file://certs/mainpubcert.pem");
+                    keystore + "cert.pem");
+
     participant_property_policy.properties().emplace_back("dds.sec.auth.builtin.PKI-DH.private_key",
-            "file://certs/mainpubkey.pem");
-    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
-                    "builtin.Access-Permissions"));
+                    keystore + "key.pem");
+
+    participant_property_policy.properties().emplace_back(Property("dds.sec.access.plugin", "builtin.Access-Permissions"));
+
     participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions_ca",
-                    "file://certs/maincacert.pem"));
+                    keystore + "permissions_ca.cert.pem"));
+
     participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
-                    "file://certs/governance.smime"));
+                    keystore + "governance.p7s"));
+
     participant_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
-                    "file://certs/permissions.smime"));
+                    keystore + "permissions.p7s"));
+
     participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
-            "builtin.AES-GCM-GMAC");
+                    "builtin.AES-GCM-GMAC");
 
     participant_property_policy.properties().emplace_back("dds.sec.log.plugin",
                 "builtin.DDS_LogTopic");
