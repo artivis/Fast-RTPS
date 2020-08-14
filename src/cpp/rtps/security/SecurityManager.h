@@ -211,6 +211,8 @@ public:
 
     bool logging_enabled() const { return logging_plugin_; }
 
+    RTPSWriter* get_logging_plugin_writer() { return logging_plugin_writer_; }
+
 private:
 
     enum AuthenticationStatus : uint32_t
@@ -539,6 +541,9 @@ private:
     WriterHistory* logging_plugin_writer_history_;
     RTPSWriter* logging_plugin_writer_;
     BuiltinLoggingTypePubSubType* logging_plugin_type_;
+
+    bool stop_ = false;
+    std::thread thread_;
 
 
     Authentication* authentication_plugin_;

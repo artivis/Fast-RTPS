@@ -113,12 +113,26 @@ SecurityManager::SecurityManager(
         participant->getRTPSParticipantAttributes().allocation.locators.max_unicast_locators,
         participant->getRTPSParticipantAttributes().allocation.locators.max_multicast_locators,
         participant->getRTPSParticipantAttributes().allocation.data_limits)
+    , stop_(false)
+    , thread_([this]() {
+              for (;;)
+              {
+                if (stop_) return;
+                hello_secure_world();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+              }
+            })
 {
     assert(participant != nullptr);
 }
 
 SecurityManager::~SecurityManager()
 {
+    stop_ = true;
+    if (thread_.joinable())
+    {
+        thread_.join();
+    }
     destroy();
 }
 
@@ -1333,15 +1347,36 @@ bool SecurityManager::create_participant_logging_message_writer()
     WriterAttributes logging_plugin_writer_attr;
     logging_plugin_writer_attr.endpoint.endpointKind = WRITER;
     logging_plugin_writer_attr.endpoint.reliabilityKind = RELIABLE;
-//    logging_plugin_writer_attr.endpoint.durabilityKind = TRANSIENT_LOCAL;
+    logging_plugin_writer_attr.endpoint.durabilityKind = VOLATILE;
     logging_plugin_writer_attr.endpoint.topicKind = NO_KEY; //WITH_KEY
-//    logging_plugin_writer_attr.matched_readers_allocation = participant_->getRTPSParticipantAttributes().allocation.participants;
+    logging_plugin_writer_attr.matched_readers_allocation = participant_->getRTPSParticipantAttributes().allocation.participants;
+    logging_plugin_writer_attr.endpoint.security_attributes().is_discovery_protected = false;
+    logging_plugin_writer_attr.endpoint.security_attributes().is_read_protected = true;
+    logging_plugin_writer_attr.endpoint.security_attributes().is_write_protected = false;
 
-//    if (participant_->getRTPSParticipantAttributes().throughputController.bytesPerPeriod != UINT32_MAX &&
-//        participant_->getRTPSParticipantAttributes().throughputController.periodMillisecs != 0           )
-//    {
-//        logging_plugin_writer_attr.mode = ASYNCHRONOUS_WRITER;
-//    }
+    logging_plugin_writer_attr.endpoint.security_attributes().is_liveliness_protected = true;
+
+    logging_plugin_writer_attr.endpoint.security_attributes().is_key_protected = true;
+    logging_plugin_writer_attr.endpoint.security_attributes().is_payload_protected = true;
+    logging_plugin_writer_attr.endpoint.security_attributes().is_submessage_protected = true;
+
+//    logging_plugin_writer_attr.endpoint.security_attributes().is_key_protected = false;
+//    logging_plugin_writer_attr.endpoint.security_attributes().is_payload_protected = false;
+//    logging_plugin_writer_attr.endpoint.security_attributes().is_submessage_protected = false;
+
+//    logging_plugin_writer_attr.endpoint.security_attributes().plugin_endpoint_attributes =
+//            PLUGIN_ENDPOINT_SECURITY_ATTRIBUTES_FLAG_IS_SUBMESSAGE_ENCRYPTED;
+
+    logging_plugin_writer_attr.endpoint.unicastLocatorList =
+        participant_->getRTPSParticipantAttributes().builtin.metatrafficUnicastLocatorList;
+    logging_plugin_writer_attr.endpoint.remoteLocatorList =
+        participant_->getRTPSParticipantAttributes().builtin.initialPeersList;
+
+    if (participant_->getRTPSParticipantAttributes().throughputController.bytesPerPeriod != UINT32_MAX &&
+        participant_->getRTPSParticipantAttributes().throughputController.periodMillisecs != 0           )
+    {
+        logging_plugin_writer_attr.mode = ASYNCHRONOUS_WRITER;
+    }
 
     RTPSWriter* logging_plugin_writer = nullptr;
 
@@ -2292,8 +2327,6 @@ bool SecurityManager::encode_rtps_message(
     assert(receiving_list.size() > 0);
 
     std::unique_lock<std::mutex> lock(mutex_);
-
-    hello_secure_world();
 
     std::vector<ParticipantCryptoHandle*> receiving_crypto_list;
     for (const auto& remote_participant : receiving_list)
