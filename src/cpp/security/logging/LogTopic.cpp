@@ -94,7 +94,7 @@ void LogTopic::publish(
     file_stream_ << " : " << builtin_msg.message << "\n";
     file_stream_.flush();
 
-    if (writer_)
+    if (writer_history_ && writer_)
     {
       if (writer_history_->isFull())
       {
