@@ -168,7 +168,8 @@ void SecurityLoggingSubscriber::SubListener::onNewDataMessage(Subscriber* sub)
             ss << std::endl;
 
             const auto str = ss.str();
-            logInfo(EXAMPLE, str);
+//            logError(EXAMPLE, str);
+            std::cout << str << std::endl;
         }
     }
 }

@@ -423,7 +423,6 @@ void SecurityManager::hello_secure_world()
 {
   if (logging_plugin_)
   {
-    logInfo(SECURITY, "hello_secure_world");
     SecurityException ex;
     logging_plugin_->log(LoggingLevel::EMERGENCY_LEVEL,
                          "Hello secure world",
