@@ -154,11 +154,11 @@ bool Logging::set_guid(
         exception = SecurityException("Invalid guid value.");
         return false;
     }
-    else if (GUID_t::unknown() != guid_)
-    {
-        exception = SecurityException("Guid already set.");
-        return false;
-    }
+//    else if (GUID_t::unknown() != guid_)
+//    {
+//        exception = SecurityException("Guid already set.");
+//        return false;
+//    }
 
     guid_ = guid;
 
