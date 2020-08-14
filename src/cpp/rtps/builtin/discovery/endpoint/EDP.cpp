@@ -1117,6 +1117,53 @@ bool EDP::pairing_reader_proxy_with_any_local_writer(
         }
     }
 
+#if HAVE_SECURITY
+    auto logging_plugin_writer = mp_RTPSParticipant->security_manager().get_logging_plugin_writer();
+    if (logging_plugin_writer) {
+      logging_plugin_writer->getMutex().lock();
+      GUID_t writerGUID = logging_plugin_writer->getGuid();
+      logging_plugin_writer->getMutex().unlock();
+      if (mp_PDP->lookupWriterProxyData(writerGUID, temp_writer_proxy_data_))
+      {
+        bool valid = validMatching(&temp_writer_proxy_data_, rdata);
+        const GUID_t& reader_guid = rdata->guid();
+
+        if (valid)
+        {
+          if (!mp_RTPSParticipant->security_manager().discovered_reader(
+                writerGUID, participant_guid, *rdata,
+                logging_plugin_writer->getAttributes().security_attributes()
+                //, true
+                ))
+          {
+            logError(RTPS_EDP, "Security manager returns an error for writer " << writerGUID);
+          }
+        }
+        else
+        {
+          if (logging_plugin_writer->matched_reader_is_matched(reader_guid)
+              && logging_plugin_writer->matched_reader_remove(reader_guid))
+          {
+            mp_RTPSParticipant->security_manager().remove_reader(
+                  logging_plugin_writer->getGuid(), participant_guid, reader_guid);
+            //MATCHED AND ADDED CORRECTLY:
+            if (logging_plugin_writer->getListener() != nullptr)
+            {
+              MatchingInfo info;
+              info.status = REMOVED_MATCHING;
+              info.remoteEndpointGuid = reader_guid;
+              logging_plugin_writer->getListener()->onWriterMatched(logging_plugin_writer, info);
+
+              const PublicationMatchedStatus& pub_info =
+                  update_publication_matched_status(reader_guid, writerGUID, -1);
+              logging_plugin_writer->getListener()->onWriterMatched(logging_plugin_writer, pub_info);
+            }
+          }
+        }
+      }
+    }
+#endif
+
     return true;
 }
 
@@ -1216,6 +1263,40 @@ bool EDP::pairing_remote_reader_with_local_writer_after_security(
 
             return false;
         }
+    }
+
+    auto logging_plugin_writer = mp_RTPSParticipant->security_manager().get_logging_plugin_writer();
+    if (logging_plugin_writer)
+    {
+
+      logging_plugin_writer->getMutex().lock();
+      GUID_t writerGUID = logging_plugin_writer->getGuid();
+      logging_plugin_writer->getMutex().unlock();
+      const GUID_t& reader_guid = remote_reader_data.guid();
+
+      if (local_writer == writerGUID)
+      {
+          if (logging_plugin_writer->matched_reader_add(remote_reader_data))
+          {
+              //MATCHED AND ADDED CORRECTLY:
+              if (logging_plugin_writer->getListener() != nullptr)
+              {
+                  MatchingInfo info;
+                  info.status = MATCHED_MATCHING;
+                  info.remoteEndpointGuid = reader_guid;
+                  logging_plugin_writer->getListener()->onWriterMatched(logging_plugin_writer, info);
+
+
+                  const PublicationMatchedStatus& pub_info =
+                          update_publication_matched_status(reader_guid, writerGUID, 1);
+                  logging_plugin_writer->getListener()->onWriterMatched(logging_plugin_writer, pub_info);
+              }
+
+              return true;
+          }
+
+          return false;
+      }
     }
 
     return pairing_remote_reader_with_local_builtin_writer_after_security(local_writer, remote_reader_data);
