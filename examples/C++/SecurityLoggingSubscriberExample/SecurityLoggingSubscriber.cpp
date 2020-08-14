@@ -51,9 +51,9 @@ bool SecurityLoggingSubscriber::init()
 //    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
 //                "builtin.AES-GCM-GMAC");
 
-    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample/my_keystore/enclaves/talker_listener/security_listener/";
-
-
+    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample"
+                                 "/keystore_noenc/enclaves/talker_listener/security_listener/";
+//                                 "/keystore/enclaves/talker_listener/security_listener/";
 
     participant_property_policy.properties().emplace_back("dds.sec.auth.plugin", "builtin.PKI-DH");
 
@@ -79,11 +79,6 @@ bool SecurityLoggingSubscriber::init()
 
     participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin", "builtin.AES-GCM-GMAC");
 
-//    participant_property_policy.properties().emplace_back("dds.sec.log.plugin", "builtin.DDS_LogTopic");
-//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.distribute", "true");
-//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.logging_level", "DEBUG_LEVEL");
-//    participant_property_policy.properties().emplace_back("dds.sec.log.builtin.DDS_LogTopic.log_file", "/tmp/security.log");
-
     PParam.rtps.properties = participant_property_policy;
 
     mp_participant = Domain::createParticipant(PParam);
@@ -100,11 +95,12 @@ bool SecurityLoggingSubscriber::init()
     Rparam.topic.topicKind = NO_KEY;
     Rparam.topic.topicDataType = "BuiltinLoggingType";
     Rparam.topic.topicName = "DDS:Security:LogTopic";
-//    Rparam.topic.historyQos.kind = KEEP_LAST_HISTORY_QOS;
-//    Rparam.topic.historyQos.depth = 30;
-//    Rparam.topic.resourceLimitsQos.max_samples = 50;
-//    Rparam.topic.resourceLimitsQos.allocated_samples = 20;
+    Rparam.topic.historyQos.kind = KEEP_LAST_HISTORY_QOS;
+    Rparam.topic.historyQos.depth = 30;
+    Rparam.topic.resourceLimitsQos.max_samples = 50;
+    Rparam.topic.resourceLimitsQos.allocated_samples = 20;
     Rparam.qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
+    Rparam.qos.m_durability.kind = VOLATILE_DURABILITY_QOS;
 
     mp_subscriber = Domain::createSubscriber(mp_participant,Rparam,(SubscriberListener*)&m_listener);
 
@@ -136,7 +132,6 @@ void SecurityLoggingSubscriber::SubListener::onSubscriptionMatched(Subscriber* /
 
 void SecurityLoggingSubscriber::SubListener::onNewDataMessage(Subscriber* sub)
 {
-    logError(SECURITY, "\n\n\n!!!!onNewDataMessage!!!!\n\n\n");
     if (sub->takeNextData((void*)&m_msg, &m_info))
     {
         if (m_info.sampleKind == ALIVE)
@@ -148,27 +143,32 @@ void SecurityLoggingSubscriber::SubListener::onNewDataMessage(Subscriber* sub)
             std::string s_severity;
             security::LogLevel_to_string(m_msg.severity, s_severity, e);
 
-            std::cout << "\n\nMessage: \n"
-                      << m_msg.facility << "\n"
-                      << s_severity << "\n"
-                      << "Stamp: " << m_msg.timestamp << "\n"
-                      << m_msg.hostname << "\n"
-                      << m_msg.hostip << "\n"
-                      << m_msg.appname << "\n"
-                      << m_msg.procid << "\n"
-                      << m_msg.msgid << "\n"
-                      << m_msg.message << "\n";
+            std::stringstream ss;
+
+            ss << "\n\nMessage: \n"
+               << m_msg.facility << "\n"
+               << s_severity << "\n"
+               << "Stamp: " << std::setprecision (std::numeric_limits<double>::digits10 + 1) << m_msg.timestamp << "\n"
+               << m_msg.hostname << "\n"
+               << m_msg.hostip << "\n"
+               << m_msg.appname << "\n"
+               << m_msg.procid << "\n"
+               << m_msg.msgid << "\n"
+               << m_msg.message << "\n";
 
             for (const auto& sd : m_msg.structured_data)
             {
-              std::cout << sd.first << "<-->";
+              ss << sd.first << ":";
               for (const auto& nvp : sd.second)
               {
-                std::cout << nvp.name << ":" << nvp.value << " ";
+                ss << "\t" << nvp.name << " : " << nvp.value << "\n";
               }
-              std::cout << "\n";
+              ss << "\n";
             }
-            std::cout << std::endl;
+            ss << std::endl;
+
+            const auto str = ss.str();
+            logInfo(EXAMPLE, str);
         }
     }
 }

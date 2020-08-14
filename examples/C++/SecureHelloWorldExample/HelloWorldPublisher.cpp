@@ -60,7 +60,9 @@ bool HelloWorldPublisher::init()
 //    participant_property_policy.properties().emplace_back("dds.sec.crypto.plugin",
 //            "builtin.AES-GCM-GMAC");
 
-    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample/my_keystore/enclaves/talker_listener/talker/";
+    const std::string keystore = "file:///home/ubuntu/ros2_ws/src/eProsima/Fast-RTPS/examples/C++/SecurityLoggingSubscriberExample"
+                                 "/keystore_noenc/enclaves/talker_listener/talker/";
+//                                 "/keystore/enclaves/talker_listener/talker/";
 
     participant_property_policy.properties().emplace_back("dds.sec.auth.plugin", "builtin.PKI-DH");
 
